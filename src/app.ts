@@ -1,3 +1,39 @@
+// Validation
+interface Validatable {
+  value: string | number;
+  required?: boolean;
+  minLength?: number;
+  maxLength?: number;
+  min?: number;
+  max?: number;
+}
+
+function Validate(validatableInput: Validatable) {
+  let isValid = true;
+  const value = validatableInput.value;
+
+  if (validatableInput.required) {
+    isValid = isValid && value.toString().trim().length !== 0;
+  }
+  if (validatableInput.minLength != null && typeof value === 'string') {
+    isValid = isValid && value.length >= validatableInput.minLength;
+  }
+  if (
+    validatableInput.maxLength &&
+    validatableInput.maxLength !== undefined &&
+    typeof value === 'string'
+  ) {
+    isValid = isValid && value.length <= validatableInput.maxLength;
+  }
+  if (validatableInput.min != null && typeof value === 'number') {
+    isValid = isValid && value >= validatableInput.min;
+  }
+  if (validatableInput.max != null && typeof value === 'number') {
+    isValid = isValid && value <= validatableInput.max;
+  }
+  return isValid;
+}
+
 // autobind decorator
 function AutoBind(_: any, _2: string, descriptor: PropertyDescriptor) {
   const originalMethod = descriptor.value;
@@ -49,12 +85,43 @@ class ProjectInput {
     this.attach();
   }
 
-  private gatherUserInput(): [string, string, number] {
+  private gatherUserInput(): [string, string, number] | void {
     const enteredTitle = this.titleInputElement.value;
     const enteredDescription = this.descriptionInputElement.value;
     const enteredPeople = this.peopleInputElement.value;
 
+    const titleValidatable: Validatable = {
+      value: enteredTitle,
+      required: true,
+    };
+    const descriptionValidatable: Validatable = {
+      value: enteredDescription,
+      required: true,
+      minLength: 5,
+    };
+    const peopleValidatable: Validatable = {
+      value: +enteredPeople,
+      required: true,
+      min: 1,
+      max: 5,
+    };
+
+    if (
+      !Validate(titleValidatable) ||
+      !Validate(descriptionValidatable) ||
+      !Validate(peopleValidatable)
+    ) {
+      alert('Invalid input, Please try again!');
+      return;
+    }
+
     return [enteredTitle, enteredDescription, +enteredPeople];
+  }
+
+  private clearInput() {
+    this.titleInputElement.value = '';
+    this.descriptionInputElement.value = '';
+    this.peopleInputElement.value = '';
   }
 
   @AutoBind
@@ -64,6 +131,7 @@ class ProjectInput {
     if (Array.isArray(userInput)) {
       const [title, desc, people] = userInput;
       console.log(title, desc, people);
+      this.clearInput();
     }
   }
 
